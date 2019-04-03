@@ -4,6 +4,7 @@ import './App.css';
 import LineChart from './LineChart';
 import ToolTip from './ToolTip';
 import InfoBox from './InfoBox';
+var _ = require('lodash');
 
 class App extends Component {
   constructor(props) {
@@ -23,21 +24,21 @@ class App extends Component {
   }
   componentDidMount(){
     const getData = () => {
-      const url = 'https://api.coindesk.com/v1/bpi/historical/close.json';
+      const url = 'https://api.coinstats.app/public/v1/charts?period=1y&coinId=cardano';
 
       fetch(url).then( r => r.json())
-        .then((bitcoinData) => {
+        .then((historicalData) => {
           const sortedData = [];
           let count = 0;
-          for (let date in bitcoinData.bpi){
+          _.forEach(historicalData.chart, function(data){
             sortedData.push({
-              d: moment(date).format('MMM DD'),
-              p: bitcoinData.bpi[date].toLocaleString('us-EN',{ style: 'currency', currency: 'USD' }),
-              x: count, //previous days
-              y: bitcoinData.bpi[date] // numerical price
+              d: moment.unix(data[0]).format('MMM DD'),
+              p: data[1].toLocaleString('us-EN',{ style: 'currency', currency: 'USD', maximumSignificantDigits: 5 }),
+              x: count,
+              y: data[1]
             });
             count++;
-          }
+          });
           this.setState({
             data: sortedData,
             fetchingData: false
@@ -54,7 +55,7 @@ class App extends Component {
 
       <div className='container'>
         <div className='row'>
-          <h1>30 Day Bitcoin Price Chart</h1>
+          <h1>1 Year ADA Price Chart</h1>
         </div>
         <div className='row'>
           { !this.state.fetchingData ?
@@ -74,7 +75,7 @@ class App extends Component {
           </div>
         </div>
         <div className='row'>
-          <div id="coindesk"> Powered by <a href="http://www.coindesk.com/price/">CoinDesk</a></div>
+          <div id="CoinStats"> Powered by <a href="https://coinstats.app/">CoinStats</a></div>
         </div>
       </div>
 

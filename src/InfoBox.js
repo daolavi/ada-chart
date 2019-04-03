@@ -1,33 +1,37 @@
 import React, { Component } from 'react';
 import moment from 'moment';
 import './InfoBox.css';
+var _ = require('lodash');
 
 class InfoBox extends Component {
   constructor(props) {
     super(props);
     this.state = {
       currentPrice: null,
-      monthChangeD: null,
-      monthChangeP: null,
+      change24hD: null,
+      change24hP: null,
       updatedAt: null
     }
   }
   componentDidMount(){
     this.getData = () => {
       const {data} = this.props;
-      const url = 'https://api.coindesk.com/v1/bpi/currentprice.json';
+      const url = 'https://api.coinstats.app/public/v1/charts?period=24h&coinId=cardano';
 
       fetch(url).then(r => r.json())
-        .then((bitcoinData) => {
-          const price = bitcoinData.bpi.USD.rate_float;
-          const change = price - data[0].y;
-          const changeP = (price - data[0].y) / data[0].y * 100;
+        .then((data24h) => {
+          const first = _.head(data24h.chart);
+          const last = _.last(data24h.chart);
 
+          const price = last[1];
+          const change = price - first[1];
+          const changeP = change / first[1] * 100;
+          const updatedAt = moment.unix(last[0]);
           this.setState({
-            currentPrice: bitcoinData.bpi.USD.rate_float,
-            monthChangeD: change.toLocaleString('us-EN',{ style: 'currency', currency: 'USD' }),
-            monthChangeP: changeP.toFixed(2) + '%',
-            updatedAt: bitcoinData.time.updated
+            currentPrice: price,
+            change24hD: change.toLocaleString('us-EN',{ style: 'currency', currency: 'USD', maximumSignificantDigits: 5 }),
+            change24hP: changeP.toFixed(2) + '%',
+            updatedAt: updatedAt
           })
         })
         .catch((e) => {
@@ -45,19 +49,19 @@ class InfoBox extends Component {
       <div id="data-container">
         { this.state.currentPrice ?
           <div id="left" className='box'>
-            <div className="heading">{this.state.currentPrice.toLocaleString('us-EN',{ style: 'currency', currency: 'USD' })}</div>
+            <div className="heading">{this.state.currentPrice.toLocaleString('us-EN',{ style: 'currency', currency: 'USD', maximumSignificantDigits: 5 })}</div>
             <div className="subtext">{'Updated ' + moment(this.state.updatedAt ).fromNow()}</div>
           </div>
         : null}
         { this.state.currentPrice ?
           <div id="middle" className='box'>
-            <div className="heading">{this.state.monthChangeD}</div>
-            <div className="subtext">Change Since Last Month (USD)</div>
+            <div className="heading">{this.state.change24hD}</div>
+            <div className="subtext">Change Since Last 24h (USD)</div>
           </div>
         : null}
           <div id="right" className='box'>
-            <div className="heading">{this.state.monthChangeP}</div>
-            <div className="subtext">Change Since Last Month (%)</div>
+            <div className="heading">{this.state.change24hP}</div>
+            <div className="subtext">Change Since Last 24h (%)</div>
           </div>
 
       </div>
